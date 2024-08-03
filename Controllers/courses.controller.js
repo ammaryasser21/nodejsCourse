@@ -1,31 +1,36 @@
 const Course = require("../Models/course.model");
-
+const httpStatusText = require("../Utilities/httpStatusText");
+const asyncWrapper = require("../Middleware/asyncWrapper");
+const AppError =require("../Utilities/appError");
 exports.getAllCourses = async (req, res) => {
-  const courses = await Course.find();
-  res.json(courses);
+  const query = req.query;
+  const limit = query.limit || 10;
+  const page = query.page || 2;
+  const skip = (page - 1) * limit;
+  const courses = await Course.find({}, { __v: false }).limit(limit).skip(skip);
+  res.json({ status: httpStatusText.SUCCESS, data: { courses } });
 };
 
-exports.getCourseById = async (req, res) => {
+exports.getCourseById = asyncWrapper(async (req, res, next) => {
   const courseID = req.params.id;
   const course = await Course.findById(courseID);
-  try {
-    if (!course) {
-      return res.status(404).json({ error: "Course not found" });
-    }
-    return res.json(course);
-  } catch (error) {
-    return res.status(400).json({ error: "Invalid object ID" });
+  if (!course) {
+    const error=AppError.create("Course not found",404,httpStatusText.FAIL);
+    return next(error);
   }
-};
+  return res.json({ status: httpStatusText.SUCCESS, data: { course } });
+});
 
-exports.createCourse = async (req, res) => {
+exports.createCourse = asyncWrapper(async (req, res,next) => {
   const newCourse = new Course(req.body);
   await newCourse.save();
-  res.status(201).json(newCourse);
-};
+  res
+    .status(201)
+    .json({ status: httpStatusText.SUCCESS, data: { course: newCourse } });
+});
 
-exports.updateCourse = async (req, res) => {
-  try {
+exports.updateCourse = asyncWrapper(async (req, res,next) => {
+
     const courseID = req.params.id;
     //findByIdAndUpdate return the old value
     //updateOne returns confirmation object
@@ -35,15 +40,16 @@ exports.updateCourse = async (req, res) => {
         $set: { ...req.body },
       }
     );
-    return res.status(200).json(updatedCourse);
-  } catch (e) {
-    return res.status(400).json({ error: e });
-  }
-};
+    return res.status(200).json({
+      status: httpStatusText.SUCCESS,
+      data: { course: updatedCourse },
+    });
 
-exports.deleteCourse = async (req, res) => {
+});
+
+exports.deleteCourse = asyncWrapper(async (req, res,next) => {
   const courseID = req.body.id;
-  const deletedData = await Course.deleteOne({ _id: courseID });
+  await Course.deleteOne({ _id: courseID });
 
-  res.status(200).json({ success: true, msg: deletedData });
-};
+  res.status(200).json({ status: httpStatusText.SUCCESS, data: null });
+});
