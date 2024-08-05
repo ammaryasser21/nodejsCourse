@@ -2,25 +2,26 @@ const express = require("express");
 const app = express();
 const cors = require("cors");
 const mongoose = require("mongoose");
-const courses = require("./routes/courses");
-const httpStatusText = require("../Utilities/httpStatusText");
+const coursesRouter = require("./Routes/courses.route");
+const usersRouter = require("./Routes/users.route");
+const httpStatusText = require("./Utilities/httpStatusText");
 require("dotenv").config();
 
 const URL = process.env.MONGODB_URI;
 mongoose.connect(URL).then(() => {
   console.log("mongoDB connected successfully");
-});
+}); 
 
 app.use(cors());
-
 app.use(express.json());
 
-app.use("/api/courses", courses);
+app.use("/api/courses", coursesRouter);
+app.use("/api/users", usersRouter);
 
 app.use((req, res) => {
   res.status(404).json({ error: "Resource not found" });
 });
-
+ 
 //global Middleware for not found routes
 app.all("*", (req, res, next) => {
   res.status(404).json({
