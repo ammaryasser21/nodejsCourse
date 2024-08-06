@@ -1,4 +1,4 @@
-const appError = require("../Utilities/appError");
+const appError = require("../utils/appError");
 
 module.exports = (...roles) => {    
     return (req, res, next) => {

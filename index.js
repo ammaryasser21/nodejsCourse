@@ -1,3 +1,4 @@
+require("dotenv").config();
 const express = require("express");
 const app = express();
 const cors = require("cors");
@@ -5,7 +6,8 @@ const mongoose = require("mongoose");
 const coursesRouter = require("./Routes/courses.route");
 const usersRouter = require("./Routes/users.route");
 const httpStatusText = require("./Utilities/httpStatusText");
-require("dotenv").config();
+const path = require('path');
+
 
 const URL = process.env.MONGODB_URI;
 mongoose.connect(URL).then(() => {
@@ -14,6 +16,7 @@ mongoose.connect(URL).then(() => {
 
 app.use(cors());
 app.use(express.json());
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 app.use("/api/courses", coursesRouter);
 app.use("/api/users", usersRouter);
